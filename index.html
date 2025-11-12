@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>캘린더 구독</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height:1.5; padding:24px; }
+    .wrap { max-width:720px; margin:0 auto; }
+    .btn { display:inline-block; padding:10px 14px; border:1px solid #111; border-radius:10px; text-decoration:none; font-weight:600; }
+    code { background:#f3f4f6; padding:8px 10px; border-radius:8px; display:inline-block; user-select:all; }
+    #android { display:none; margin-top:16px; }
+  </style>
+  <script>
+    // === 설정: 여기에 당신의 .ics 파일명을 넣으세요 ===
+    const ICS_FILENAME = "merged_standart.ics"; // 예: merged_standard.ics
+
+    function isIOS(){ return /iPhone|iPad|iPod/i.test(navigator.userAgent); }
+
+    function buildUrls(){
+      // 현재 페이지 기준 절대 HTTPS URL
+      const httpsUrl = new URL(ICS_FILENAME, location.href).href;
+      // 동일 경로의 webcal URL
+      const webcalUrl = "webcal://" + httpsUrl.replace(/^https?:\/\//, "");
+      return { httpsUrl, webcalUrl };
+    }
+
+    function boot(){
+      const { httpsUrl, webcalUrl } = buildUrls();
+
+      // iOS는 자동으로 webcal://로 이동 (실패 대비 수동 버튼도 표시)
+      if (isIOS()){
+        // 자동 이동
+        window.location.href = webcalUrl;
+
+        // 사용자가 수동으로 눌러 열 수 있도록 링크도 보여줌
+        document.getElementById("iosLink").href = webcalUrl;
+        document.getElementById("httpsIcs").textContent = httpsUrl;
+        document.getElementById("ios").style.display = "block";
+      } else {
+        // Android/PC 안내 노출
+        document.getElementById("downloadIcs").href = httpsUrl;
+        document.getElementById("gcalUrl").textContent = httpsUrl;
+        document.getElementById("android").style.display = "block";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", boot);
+
+    function copyText(id){
+      const text = document.getElementById(id).textContent.trim();
+      navigator.clipboard?.writeText(text);
+      const btn = document.getElementById("btnCopy");
+      if (btn){ const old = btn.textContent; btn.textContent = "복사됨!"; setTimeout(()=> btn.textContent = old, 1500); }
+    }
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <!-- iPhone 섹션 -->
+    <div id="ios" style="display:none;">
+      <h1>iPhone에서 구독 열기</h1>
+      <p>잠시 후 자동으로 “애플 캘린더 구독” 팝업이 뜹니다. 안 뜨면 아래 버튼을 눌러 주세요.</p>
+      <p><a id="iosLink" class="btn" href="#">iPhone에서 구독 열기</a></p>
+      <p style="color:#666; font-size:14px;">문제 발생 시, Safari에서 이 페이지를 여세요. 회사/학교 보안 브라우저에서는 webcal 링크가 막힐 수 있습니다.</p>
+      <p><small>직접 URL: <code id="httpsIcs"></code></small></p>
+    </div>
+
+    <!-- Android / PC 섹션 -->
+    <div id="android">
+      <h1>Android / PC 안내</h1>
+      <ol>
+        <li style="margin-bottom:12px;">
+          <a id="downloadIcs" class="btn" href="#" download>.ics 파일 다운로드</a>
+          <div style="margin-top:6px;color:#555;">
+            갤럭시 기본 캘린더: 다운로드 후 <b>연결 앱 “캘린더”</b> 선택 → <b>저장</b>
+          </div>
+        </li>
+        <li style="margin-top:14px;">
+          <div style="margin-bottom:8px;">구글 캘린더(PC 웹) → <b>다른 캘린더</b> → <b>URL로 추가</b>에 아래 주소 붙여넣기</div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <code id="gcalUrl"></code>
+            <button id="btnCopy" class="btn" type="button" onclick="copyText('gcalUrl')">주소 복사</button>
+          </div>
+          <div style="margin-top:6px;color:#666;">PC에서 추가하면 휴대폰 구글 캘린더 앱과 자동 동기화됩니다.</div>
+        </li>
+      </ol>
+    </div>
+  </div>
+</body>
+</html>
